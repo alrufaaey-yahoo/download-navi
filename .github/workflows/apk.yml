@@ -1,0 +1,59 @@
+name: Build & Release APK (unsigned)
+
+# يشتغل فقط عند Push لعلامة (Tag)
+on:
+  push:
+    tags:
+      - '*'   # أي tag
+
+jobs:
+  build:
+    name: Build release APK
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+
+    - name: Give execute permission for gradlew
+      run: chmod +x ./gradlew
+
+    # Build Gradle release (unsigned)
+    - name: Build unsigned release APK
+      run: ./gradlew assembleRelease
+
+    # Upload APK as artifact (optional)
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: unsigned-release-apk
+        path: app/build/outputs/apk/release/*.apk
+
+    # Create GitHub Release
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Attach generated APK to the release
+    - name: Upload APK to Release
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: app/build/outputs/apk/release/app-release-unsigned.apk
+        asset_name: download-navi-${{ github.ref_name }}-unsigned.apk
+        asset_content_type: application/vnd.android.package-archive
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
