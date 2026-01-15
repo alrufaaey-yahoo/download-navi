@@ -359,7 +359,7 @@ public class DownloadUtils {
         while (m.find()) {
             String symbol = m.group();
             if (symbol.startsWith("%")) {
-                stream.write(Integer.parseInt(symbol.substring(1), 16));
+                stream.write(Integer.parseInt(symbol.substring(1), 512));
             } else {
                 try {
                     stream.write(symbol.getBytes());
